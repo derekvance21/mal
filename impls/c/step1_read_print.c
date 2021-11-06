@@ -1,86 +1,36 @@
-#include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
-#include <unistd.h>
+#include <stdlib.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 
-#include "types.h"
-#include "readline.h"
-#include "reader.h"
+char* READ(char *in) {
+    return in;
+}
 
-// read
-MalVal *READ(char prompt[], char *str) {
+char* EVAL(char *in) {
+    return in;
+}
+
+char* PRINT(char *in) {
+    return in;
+}
+
+char* rep(char *in) {
+    return PRINT(EVAL(READ(in)));
+}
+
+int main(int argc, char *argv[]) {
     char *line;
-    MalVal *ast;
-    if (str) {
-        line = str;
-    } else {
-        line = _readline(prompt);
+    for (;;) {
+        line = readline("user> ");
         if (!line) {
-            _error("EOF");
-            return NULL;
+            printf("\n");
+            break;
         }
-    }
-    ast = read_str(line);
-    if (!str) { MAL_GC_FREE(line); }
-    return ast;
-}
-
-// eval
-MalVal *EVAL(MalVal *ast, GHashTable *env) {
-    if (!ast || mal_error) return NULL;
-    return ast;
-}
-
-// print
-char *PRINT(MalVal *exp) {
-    if (mal_error) {
-        return NULL;
-    }
-    return _pr_str(exp,1);
-}
-
-// repl
-
-// read and eval
-MalVal *RE(GHashTable *env, char *prompt, char *str) {
-    MalVal *ast, *exp;
-    ast = READ(prompt, str);
-    if (!ast || mal_error) return NULL;
-    exp = EVAL(ast, env);
-    if (ast != exp) {
-        malval_free(ast);    // Free input structure
-    }
-    return exp;
-}
-
-int main()
-{
-    MalVal *exp;
-    char *output;
-    char prompt[100];
-
-    MAL_GC_SETUP();
-
-    // Set the initial prompt
-    snprintf(prompt, sizeof(prompt), "user> ");
-
-    // repl loop
-    for(;;) {
-        exp = RE(NULL, prompt, NULL);
-        if (mal_error && strcmp("EOF", mal_error->val.string) == 0) {
-            return 0;
+        if (*line) {
+            add_history(line);
+            printf("%s\n", rep(line));
         }
-        output = PRINT(exp);
-
-        if (mal_error) {
-            fprintf(stderr, "Error: %s\n", _pr_str(mal_error,1));
-            malval_free(mal_error);
-            mal_error = NULL;
-        } else if (output) {
-            puts(output);
-            MAL_GC_FREE(output);        // Free output string
-        }
-
-        //malval_free(exp);    // Free evaluated expression
+        free(line);
     }
 }
