@@ -31,7 +31,7 @@ char* pr_str(mal_t mal)
         int i;
         for (i = 0; i < mal.val.list->len; ++i)
         {
-            char *element = pr_str(((mal_t *)mal.val.list->items)[i]);
+            char *element = pr_str(((mal_t*)mal.val.list->items)[i]);
             list_strlen += strlen(element);
 
             // similar thing is happening here?
@@ -52,6 +52,7 @@ char* pr_str(mal_t mal)
             char *element_str = ((char **)elements->items)[i];
             strcpy(list_str + list_str_start, element_str);
             list_str_start += strlen(element_str);
+            // WARNING: This free is all sorts of trouble, specifically for non-malloc allocated string literals used as symbols, strings, or errmsgs
             free(element_str);
         }
         list_str[list_str_start++] = ')';

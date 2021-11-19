@@ -92,7 +92,7 @@ void reader_free(reader_t *reader)
 
 mal_t read_list(reader_t *reader)
 {
-    mal_t mal = mal_list(vector_init(sizeof(mal_t)));
+    vector_t *elements = vector_init(sizeof(mal_t));
     char *token;
     // advance the reader past the opening '('
     reader->next(reader);
@@ -104,8 +104,9 @@ mal_t read_list(reader_t *reader)
         {
             return element;
         }
-        int pos = vector_push(mal.val.list);
-        ((mal_t*)mal.val.list->items)[pos] = element;
+
+        int pos = vector_push(elements);
+        ((mal_t*)elements->items)[pos] = element;
 
         // check if out of tokens (no matching closing parentheses)
         if (reader->pos >= reader->tokens->len) 
@@ -116,7 +117,7 @@ mal_t read_list(reader_t *reader)
 
     // advance the reader past the closing ')'
     reader->next(reader);
-    return mal;
+    return mal_list(elements);
 }
 
 mal_t read_atom(reader_t *reader)
