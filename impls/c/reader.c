@@ -2,130 +2,171 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "vector.h"
+#include "types.h"
+#include "reader.h"
 
-
-struct reader;
-
-typedef struct reader {
-    regex_t regex;
-    regmatch_t *tokens;
-    int pos;
-    regmatch_t* (*next)(struct reader *self, char *in);
-    regmatch_t* (*peek)(struct reader *self, char *in);
-} reader_t;
-
-regmatch_t* next(reader_t *self, char *in) {
-    return NULL;
-}
-
-regmatch_t* peek(reader_t *self, char *in) {
-    return NULL;
-}
-
-void readerInit(reader_t *reader) {
-    reader->next = next;
-    reader->peek = peek;
-
-}
-
-typedef struct token {
-    int so;
-    int eo;
-    int len;
-} token_t;
-
-typedef struct tokens {
-    int num;
-    token_t *tokens;
-    char *str;
-} tokens_t;
-
-tokens_t* tokenize(char *in) {
+vector_t *tokenize(char *in)
+{
     regex_t regex;
     int reti;
     regmatch_t pmatch[2];
     char errbuf[1024];
-    tokens_t *tokens = malloc(sizeof(tokens_t));
-    tokens->num = 0;
-    tokens->tokens = calloc(tokens->num, sizeof(token_t));
-    tokens->str = in;
-    
-    int tokens_len = 1;
+
+    vector_t *tokens = vector_init(sizeof(char*));
+
     size_t in_len = strlen(in);
 
-    // withing capture group, curly braces need to be escaped or regcomp will yell at you
-    // ^^^ HOWEVER, this doesn't actually work, doing '\\{\\}' inside a character class will match backslashes
-    // ^^^ DOUBLE HOWEVER, when it yells at you 'Invalid content of \{\}', it goes away if you remove the literal square brackets (WHAT?)
-    // for some reason, within symbol character class, \\[]\\[] must appear before or after the ) , and nowhere else. :|
-    // missing piece is string literals, specifically capturing the entire literal as one capture group (while still supporting escaped double quotes) inside string
-    // there's something wrong with the non-capturing group. hmmm. 'Could not compile regex: Invalid preceding regular expression'
-    // "[[:space:],]*(~@|[\\[\\]{}()'`~^@]|\"(?:\\\\.|[^\\\\\"])*\"?|;.*|[^[:space:]\\[\\]{}('\"`,;)]*)"
+    // if I leave the \\[\\] (or '[]', it doesn't matter) it won't match correctly at all
     reti = regcomp(&regex, "[[:space:],]*(~@|[{}()'`~^@]|\"(\\\\.|[^\\\"])*\"?|;.*|[^[:space:]{}('\"`,;)]*)", REG_EXTENDED);
 
-    // if I leave the \\[\\] (or '[]', it doesn't matter) it won't match correctly at all 
-    // for some reason, \\s* will match whitespace, but [\\s]* will not!
-    // even though [def] will match any of the characters d, e, and f
-    // I think it's because backslashing within character groups fucks things up, so it's treated as '\' and 's'
-    // so have to use [:space:]
-    // reti = regcomp(&regex, "d", REG_EXTENDED);
-    
-    if (reti) {
+    if (reti)
+    {
         regerror(reti, &regex, errbuf, sizeof(errbuf));
         fprintf(stderr, "Could not compile regex: %s\n", errbuf);
         exit(1);
     }
-    
+
     int i;
-    for (i = 0; i < in_len; i=i) {
+    for (i = 0; i < in_len; i = i)
+    {
+        // pmatch[0] == consumed characters
+        // pmatch[1] == captured token
         reti = regexec(&regex, in + i, 2, pmatch, 0);
-    
-        if (reti) {
+
+        if (reti)
+        {
             regerror(reti, &regex, errbuf, sizeof(errbuf));
             fprintf(stderr, "Could not execute regex: %s\n", errbuf);
             exit(1);
         }
 
-	// pmatch[0] == consumed characters
-	// pmatch[1] == captured token
-        
-	token_t token;
-	token.so = i + pmatch[1].rm_so;
-	token.eo = i + pmatch[1].rm_eo;
-	token.len = pmatch[1].rm_eo - pmatch[1].rm_so;
-	tokens->tokens[tokens->num++] = token;
-	
-	
-	if (tokens->num >= tokens_len) {
-	    printf("reallocing from %d to %d size\n", tokens_len, tokens_len * 2);
-	    tokens->tokens = reallocarray(tokens->tokens, tokens_len *= 2, sizeof(token_t));
-	}
+        int token_len = pmatch[1].rm_eo - pmatch[1].rm_so;
 
-	i += pmatch[1].rm_eo;
+        char *token = malloc(1 + token_len);
+        strncpy(token, in + i + pmatch[1].rm_so, token_len);
+        token[token_len] = '\0';
+        
+        // I found an incredibly weird bug here:
+        // if you index into items with a call to vector_push(tokens),
+        // the 3rd, 5th, 9th, ... elements will be null, but if you provide a variable for it's return value,
+        // and use that, the elements will be added correctly
+        int new_pos = vector_push(tokens);
+        ((char**) tokens->items)[new_pos] = token;
+        // printf("vector[%d]: %s - expected: %s\n", tokens->len - 1, ((char**) tokens->items)[tokens->len - 1], token);
+
+        i += pmatch[1].rm_eo;
     }
 
     regfree(&regex);
-    tokens->tokens = reallocarray(tokens->tokens, tokens->num, sizeof(token_t));
     return tokens;
 }
 
-void freeTokens(tokens_t *tokens) {
-    free(tokens->tokens);
-    free(tokens);
+char* next(reader_t *self)
+{
+    return ((char**) self->tokens->items)[self->pos++];
 }
 
-int main(int argc, char *argv[]) {
-    char *line = "  (+ 3 4 (add 23 1) (mult 4 5) {length \"derek vance \\\"the great\\\" - cheesy\"})";
-    // char *line = "d";
-    printf("%s\n", line);
-    tokens_t *tokens = tokenize(line);
-    
-    char token[1024];
-    int i;
-    for (i = 0; i < tokens->num; ++i) {
-	memset(token, '\0', sizeof(token));
-        strncpy(token, tokens->str + tokens->tokens[i].so, tokens->tokens[i].len);        
-	printf("token %d: %s|\n", i, token);
+char* peek(reader_t *self)
+{
+    char** tokens_strs = (char**) self->tokens->items;
+    char *token = tokens_strs[self->pos];
+    return token;
+}
+
+reader_t* reader_init(char *in)
+{
+    reader_t *reader = malloc(sizeof(reader_t));
+    reader->tokens = tokenize(in);
+    reader->pos = 0;
+    reader->next = next;
+    reader->peek = peek;
+    return reader;
+}
+
+void reader_free(reader_t *reader)
+{
+    vector_free(reader->tokens);
+    free(reader);
+}
+
+mal_t read_list(reader_t *reader)
+{
+    mal_t mal = mal_list(vector_init(sizeof(mal_t)));
+    char *token;
+    // advance the reader past the opening '('
+    reader->next(reader);
+
+    while (strcmp(token = reader->peek(reader), ")") != 0)
+    {
+        mal_t element = read_form(reader);
+        if (element.type == ERROR)
+        {
+            return element;
+        }
+        int pos = vector_push(mal.val.list);
+        ((mal_t*)mal.val.list->items)[pos] = element;
+
+        // check if out of tokens (no matching closing parentheses)
+        if (reader->pos >= reader->tokens->len) 
+        {
+            return mal_error("Syntax Error: missing a matching closing parentheses");
+        }
     }
 
-    freeTokens(tokens);
+    // advance the reader past the closing ')'
+    reader->next(reader);
+    return mal;
+}
+
+mal_t read_atom(reader_t *reader)
+{
+    char *token = reader->next(reader);
+    if (token[0] == '"')
+    {
+        return mal_string(token);
+    }
+    else
+    {
+        // see if it's an integer
+        char *endptr;
+        int val = strtol(token, &endptr, 10);
+
+        // didn't reach the end of token, so it's not an integer
+        if (*endptr != '\0')
+        {
+            return mal_symbol(token);
+        }
+
+        return mal_integer(val);
+    }
+}
+
+mal_t read_comment(reader_t *reader)
+{
+    reader->next(reader);
+    return mal_symbol("nil");
+}
+
+mal_t read_form(reader_t *reader)
+{
+    char *token = reader->peek(reader);
+    switch (token[0])
+    {
+        case '(':
+        {
+            mal_t list = read_list(reader);
+            return list;
+        }
+        case ';':
+            return read_comment(reader);
+        default:
+            return read_atom(reader);
+    }
+}
+
+mal_t read_str(char *in)
+{
+    reader_t *reader = reader_init(in);
+    return read_form(reader);
 }

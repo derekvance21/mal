@@ -8,13 +8,16 @@ LIBS = -lreadline
 
 #####################
 
-all: clean step0_repl
+all: clean step2_eval
 
 step0_repl: $(OBJS)
 	gcc $(FLAGS) $(OBJS) -o step0_repl $(LIBS)
 
-step0_repl: $(OBJS)
+step1_repl: $(OBJS)
 	gcc $(FLAGS) $(OBJS) -o step1_read_print $(LIBS)
+
+step2_eval: $(OBJS)
+	gcc $(FLAGS) $(OBJS) -o step2_eval $(LIBS)
 
 %.o: %.c
 	gcc $(FLAGS) -c $< -o $@ $(LIBS)
