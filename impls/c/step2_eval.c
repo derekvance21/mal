@@ -15,7 +15,12 @@ mal_t eval_ast(mal_t ast, env_t *env)
     switch (ast.type)
     {
         case SYMBOL:
-            return env_get(env, ast.val.symbol);
+        {
+            mal_t mal = env_get(env, ast.val.symbol);
+            // ast.val.symbol was a unique malloc'd token, so free it after indexing into env
+            free(ast.val.symbol);
+            return mal;
+        }
         case LIST:
             {
                 int i;
@@ -25,6 +30,8 @@ mal_t eval_ast(mal_t ast, env_t *env)
                     int pos = vector_push(elements);
                     ((mal_t*)elements->items)[pos] = EVAL(((mal_t*)ast.val.list->items)[i], env);
                 }
+                // apply the first element's procedure to the arguments
+                // then free(elements)
                 return mal_list(elements);
             }
         default:
@@ -56,14 +63,10 @@ char* rep(char *in, env_t *env)
 int main(int argc, char *argv[])
 {
     env_t repl_env = env_init();
-    char *env_str = "env!";
-    char *env_test = malloc(strlen(env_str));
-    strcpy(env_test, env_str);
-    // TODO: this is all sorts of freeing errors
-    env_insert(&repl_env, "+", mal_error(env_test));
-    env_insert(&repl_env, "-", mal_error(env_test));
-    env_insert(&repl_env, "*", mal_error(env_test));
-    env_insert(&repl_env, "/", mal_error(env_test));
+    env_insert(&repl_env, "+", mal_integer(42));
+    env_insert(&repl_env, "-", mal_integer(42));
+    env_insert(&repl_env, "*", mal_integer(42));
+    env_insert(&repl_env, "/", mal_integer(42));
 
     char *line;
     for (;;) {
@@ -74,7 +77,9 @@ int main(int argc, char *argv[])
         }
         if (*line) {
             add_history(line);
-            printf("%s\n", rep(line, &repl_env));
+            char *rep_str = rep(line, &repl_env);
+            printf("%s\n", rep_str);
+            // rep_str should be free'd, except for errors
         }
         free(line);
     }

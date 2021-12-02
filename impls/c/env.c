@@ -4,6 +4,8 @@
 #include "env.h"
 #include "types.h"
 
+const int BUCKETS = 16;
+
 
 int hash(char *key)
 {
@@ -22,7 +24,7 @@ env_t env_init()
 {
     env_t env;
     int i;
-    for (i = 0; i < 16; ++i)
+    for (i = 0; i < BUCKETS; ++i)
     {
         env.buckets[i] = NULL;
     }
@@ -31,7 +33,7 @@ env_t env_init()
 
 int env_insert(env_t *env, char *key, mal_t mal)
 {
-    int bucket = hash(key) % 16;
+    int bucket = hash(key) % BUCKETS;
 
     // first in bucket
     if (!env->buckets[bucket])
@@ -80,9 +82,7 @@ int env_insert(env_t *env, char *key, mal_t mal)
 
 mal_t env_get(env_t *env, char *key)
 {
-
-    int bucket = hash(key) % 16;
-    printf("env_get('%s'), bucket: %d\n", key, bucket);
+    int bucket = hash(key) % BUCKETS;
     env_element_t *curr = env->buckets[bucket];
     while (curr)
     {
@@ -97,5 +97,16 @@ mal_t env_get(env_t *env, char *key)
 
 void env_free(env_t *env)
 {
-    return;
+    int i;
+    for (i = 0; i < BUCKETS; ++i)
+    {
+        env_element_t *next;
+        env_element_t *curr = env->buckets[i];
+        while (curr)
+        {
+            next = curr->next;
+            free(curr);
+            curr = next;
+        }
+    }
 }

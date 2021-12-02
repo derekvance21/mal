@@ -34,11 +34,11 @@ char* pr_str(mal_t mal)
             char *element = pr_str(((mal_t*)mal.val.list->items)[i]);
             list_strlen += strlen(element);
 
-            // similar thing is happening here?
             int pos = vector_push(elements);
             ((char **)elements->items)[pos] = element;
         }
         // need room for the entire length of the n elements, plus n - 1 spaces, plus null byte, plus 2 parentheses
+        // this is the only string I need to leave malloc'd, the rest need to be free'd (symbol, string, others?...) 
         char *list_str = malloc(list_strlen + (elements->len - 1) + 3);
         int list_str_start = 0;
         list_str[list_str_start++] = '(';
@@ -52,8 +52,14 @@ char* pr_str(mal_t mal)
             char *element_str = ((char **)elements->items)[i];
             strcpy(list_str + list_str_start, element_str);
             list_str_start += strlen(element_str);
-            // WARNING: This free is all sorts of trouble, specifically for non-malloc allocated string literals used as symbols, strings, or errmsgs
-            free(element_str);
+            // this should be every element_str that needs to be free'd
+            // integer mallocs in pr_str[INTEGER], symbol and string malloc'd in tokenize, list mallocs in pr_str[LIST]
+            // the only one that doesn't (ATM) is ERROR, which uses string literals. This may change with dynamic error messaging
+            mal_t element_mal = ((mal_t*)mal.val.list->items)[i];
+            if (element_mal.type != ERROR)
+            {
+                free(element_str);
+            }
         }
         list_str[list_str_start++] = ')';
         list_str[list_str_start] = '\0';

@@ -94,8 +94,8 @@ mal_t read_list(reader_t *reader)
 {
     vector_t *elements = vector_init(sizeof(mal_t));
     char *token;
-    // advance the reader past the opening '('
-    reader->next(reader);
+    // advance the reader past the opening '(', freeing token
+    free(reader->next(reader));
 
     while (strcmp(token = reader->peek(reader), ")") != 0)
     {
@@ -115,8 +115,8 @@ mal_t read_list(reader_t *reader)
         }
     }
 
-    // advance the reader past the closing ')'
-    reader->next(reader);
+    // advance the reader past the closing ')', freeing token
+    free(reader->next(reader));
     return mal_list(elements);
 }
 
@@ -138,14 +138,19 @@ mal_t read_atom(reader_t *reader)
         {
             return mal_symbol(token);
         }
+        // it's an integer, so free the token char*, because now we'll just use int val
+        else 
+        {
+            free(token);
+            return mal_integer(val);
+        }
 
-        return mal_integer(val);
     }
 }
 
 mal_t read_comment(reader_t *reader)
 {
-    reader->next(reader);
+    free(reader->next(reader));
     return mal_symbol("nil");
 }
 
@@ -169,5 +174,7 @@ mal_t read_form(reader_t *reader)
 mal_t read_str(char *in)
 {
     reader_t *reader = reader_init(in);
-    return read_form(reader);
+    mal_t ast = read_form(reader);
+    reader_free(reader);
+    return ast;
 }
