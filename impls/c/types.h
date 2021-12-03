@@ -13,6 +13,7 @@ typedef enum
     SYMBOL = 16,
     STRING = 32,
     ERROR = 64,
+    FUNCTION = 128,
 } MalType;
 
 typedef struct Mal
@@ -26,6 +27,7 @@ typedef struct Mal
         char *symbol;
         char *string;
         char *errmsg;
+        struct Mal (*func)(int, struct Mal*);
     } val;
 } mal_t;
 
@@ -36,6 +38,7 @@ mal_t mal_decimal(float decimal);
 mal_t mal_symbol(char *symbol);
 mal_t mal_string(char *string);
 mal_t mal_error(char *errmsg);
+mal_t mal_func(mal_t (*func)(int, mal_t*));
 
 
 #endif

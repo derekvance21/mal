@@ -8,6 +8,82 @@
 #include "printer.h"
 #include "env.h"
 
+mal_t add(int argc, mal_t *argv)
+{
+    int sum = 0;
+    int i;
+    for (i = 0; i < argc; ++i)
+    {
+        mal_t mal = argv[i];
+        if (mal.type != INTEGER)
+        {
+            return mal_error("Error: cannot add a non-integer with +");
+        }
+        sum += mal.val.integer;
+    }
+    mal_t result;
+    result.type = INTEGER;
+    result.val.integer = sum;
+    return result;
+}
+
+// mal_t sub(int argc, mal_t *argv)
+// {
+//     int sum = 0;
+//     int i;
+//     for (i = 0; i < argc, ++i)
+//     {
+//         mal_t mal = argv[i];
+//         if (mal.type != INTEGER)
+//         {
+//             return mal_error("Error: cannot add a non-integer with +");
+//         }
+//         sum += mal.val.integer;
+//     }
+//     mal_t result;
+//     result.type = INTEGER;
+//     result.val.integer = sum;
+//     return result;
+// }
+
+mal_t mul(int argc, mal_t *argv)
+{
+    int prod = 1;
+    int i;
+    for (i = 0; i < argc; ++i)
+    {
+        mal_t mal = argv[i];
+        if (mal.type != INTEGER)
+        {
+            return mal_error("Error: cannot multiply a non-integer with *");
+        }
+        prod *= mal.val.integer;
+    }
+    mal_t result;
+    result.type = INTEGER;
+    result.val.integer = prod;
+    return result;
+}
+
+// mal_t div(int argc, mal_t *argv)
+// {
+//     int sum = 0;
+//     int i;
+//     for (i = 0; i < argc, ++i)
+//     {
+//         mal_t mal = argv[i];
+//         if (mal.type != INTEGER)
+//         {
+//             return mal_error("Error: cannot add a non-integer with +");
+//         }
+//         sum += mal.val.integer;
+//     }
+//     mal_t result;
+//     result.type = INTEGER;
+//     result.val.integer = sum;
+//     return result;
+// }
+
 mal_t EVAL(mal_t ast, env_t *env);
 
 mal_t eval_ast(mal_t ast, env_t *env)
@@ -23,6 +99,10 @@ mal_t eval_ast(mal_t ast, env_t *env)
         }
         case LIST:
             {
+                if (ast.val.list->len == 0)
+                {
+                    return mal_error("Error: Cannot evaluate empty list");
+                }
                 int i;
                 vector_t *elements = vector_init(sizeof(mal_t));
                 for (i = 0; i < ast.val.list->len; ++i)
@@ -30,9 +110,18 @@ mal_t eval_ast(mal_t ast, env_t *env)
                     int pos = vector_push(elements);
                     ((mal_t*)elements->items)[pos] = EVAL(((mal_t*)ast.val.list->items)[i], env);
                 }
+
                 // apply the first element's procedure to the arguments
-                // then free(elements)
-                return mal_list(elements);
+                mal_t func = ((mal_t*)elements->items)[0];
+                if (func.type != FUNCTION)
+                {
+                    return mal_error("Error: Cannot apply non-function mal_t type");
+                }
+
+                // apply func, with argument list length and list of argument mal_t elements
+                mal_t result = func.val.func(elements->len - 1, &((mal_t*) elements->items)[1]);
+                free(elements);
+                return result;
             }
         default:
             return ast;
@@ -63,9 +152,9 @@ char* rep(char *in, env_t *env)
 int main(int argc, char *argv[])
 {
     env_t repl_env = env_init();
-    env_insert(&repl_env, "+", mal_integer(42));
+    env_insert(&repl_env, "+", mal_func(add));
     env_insert(&repl_env, "-", mal_integer(42));
-    env_insert(&repl_env, "*", mal_integer(42));
+    env_insert(&repl_env, "*", mal_func(mul));
     env_insert(&repl_env, "/", mal_integer(42));
 
     char *line;

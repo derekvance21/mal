@@ -57,3 +57,11 @@ mal_t mal_error(char *errmsg)
     return mal;
 }
 
+// func: pointer to function which takes a int (argc) and a void* and returns a void*
+mal_t mal_func(mal_t (*func)(int, mal_t*))
+{
+    mal_t mal;
+    mal.type = FUNCTION;
+    mal.val.func = func;
+    return mal;
+}
