@@ -20,9 +20,10 @@ int hash(char *key)
     return hash;
 }
 
-env_t env_init()
+env_t env_init(env_t *outer)
 {
     env_t env;
+    env.outer = outer;
     int i;
     for (i = 0; i < BUCKETS; ++i)
     {
@@ -72,26 +73,35 @@ int env_insert(env_t *env, char *key, mal_t mal)
         perror("error allocating memory for env");
         exit(1);
     }
-    env_element_t insert;
-    insert.key = key;
-    insert.mal = mal;
-    insert.next = NULL;
-    *curr->next = insert;
+    env_element_t new;
+    new.key = key;
+    new.mal = mal;
+    new.next = NULL;
+    *curr->next = new;
     return 0;
 }
 
 mal_t env_get(env_t *env, char *key)
 {
     int bucket = hash(key) % BUCKETS;
-    env_element_t *curr = env->buckets[bucket];
-    while (curr)
+
+    env_t *curr_env = env;
+    while (curr_env)
     {
-        if (strcmp(key, curr->key) == 0)
+        env_element_t *curr_elm = curr_env->buckets[bucket];
+        while (curr_elm)
         {
-            return curr->mal;
+            if (strcmp(key, curr_elm->key) == 0)
+            {
+                return curr_elm->mal;
+            }
+            curr_elm = curr_elm->next;
         }
-        curr = curr->next;
+
+        // couldn't find key in current env, moving to outer
+        curr_env = curr_env->outer;
     }
+
     return mal_error("Runtime Error: cannot reference an identifier before its definition");
 }
 

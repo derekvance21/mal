@@ -2,6 +2,8 @@
 #define VECTOR_H
 
 
+// TODO: Make vector_init return a static vector_t?
+
 typedef struct vector
 {
     void *items;

@@ -31,6 +31,9 @@ typedef struct Mal
     } val;
 } mal_t;
 
+// TODO: Generic mal_free(mal_t mal) function that switches on the type and free's alloc'd resources as necessary
+// ex: symbol, string need their char* to be free'd, list needs vector_t to be free'd
+
 mal_t mal_atom(mal_t *atom);
 mal_t mal_list(vector_t *vec);
 mal_t mal_integer(int integer);

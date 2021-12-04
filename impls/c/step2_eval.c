@@ -1,176 +1,58 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <readline/readline.h>
-#include <readline/history.h>
-#include "types.h"
-#include "reader.h"
-#include "printer.h"
-#include "env.h"
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <string.h>
+// #include <readline/readline.h>
+// #include <readline/history.h>
+// #include "types.h"
+// #include "reader.h"
+// #include "printer.h"
+// #include "env.h"
+// #include "core.h"
+// #include "eval.h"
 
-mal_t add(int argc, mal_t *argv)
-{
-    int sum = 0;
-    int i;
-    for (i = 0; i < argc; ++i)
-    {
-        mal_t mal = argv[i];
-        if (mal.type != INTEGER)
-        {
-            return mal_error("Error: cannot add a non-integer with +");
-        }
-        sum += mal.val.integer;
-    }
-    mal_t result;
-    result.type = INTEGER;
-    result.val.integer = sum;
-    return result;
-}
 
-// mal_t sub(int argc, mal_t *argv)
+// mal_t READ(char *in)
 // {
-//     int sum = 0;
-//     int i;
-//     for (i = 0; i < argc, ++i)
-//     {
-//         mal_t mal = argv[i];
-//         if (mal.type != INTEGER)
-//         {
-//             return mal_error("Error: cannot add a non-integer with +");
-//         }
-//         sum += mal.val.integer;
-//     }
-//     mal_t result;
-//     result.type = INTEGER;
-//     result.val.integer = sum;
-//     return result;
+//     return read_str(in);
 // }
 
-mal_t mul(int argc, mal_t *argv)
-{
-    int prod = 1;
-    int i;
-    for (i = 0; i < argc; ++i)
-    {
-        mal_t mal = argv[i];
-        if (mal.type != INTEGER)
-        {
-            return mal_error("Error: cannot multiply a non-integer with *");
-        }
-        prod *= mal.val.integer;
-    }
-    mal_t result;
-    result.type = INTEGER;
-    result.val.integer = prod;
-    return result;
-}
-
-// mal_t div(int argc, mal_t *argv)
+// mal_t EVAL(mal_t ast, env_t *env)
 // {
-//     int sum = 0;
-//     int i;
-//     for (i = 0; i < argc, ++i)
-//     {
-//         mal_t mal = argv[i];
-//         if (mal.type != INTEGER)
-//         {
-//             return mal_error("Error: cannot add a non-integer with +");
-//         }
-//         sum += mal.val.integer;
-//     }
-//     mal_t result;
-//     result.type = INTEGER;
-//     result.val.integer = sum;
-//     return result;
+//     return eval_ast(ast, env);
 // }
 
-mal_t EVAL(mal_t ast, env_t *env);
+// char* PRINT(mal_t ast)
+// {
+//     return pr_str(ast);
+// }
 
-mal_t eval_ast(mal_t ast, env_t *env)
-{
-    switch (ast.type)
-    {
-        case SYMBOL:
-        {
-            mal_t mal = env_get(env, ast.val.symbol);
-            // ast.val.symbol was a unique malloc'd token, so free it after indexing into env
-            free(ast.val.symbol);
-            return mal;
-        }
-        case LIST:
-            {
-                if (ast.val.list->len == 0)
-                {
-                    return mal_error("Error: Cannot evaluate empty list");
-                }
-                int i;
-                vector_t *elements = vector_init(sizeof(mal_t));
-                for (i = 0; i < ast.val.list->len; ++i)
-                {
-                    int pos = vector_push(elements);
-                    ((mal_t*)elements->items)[pos] = EVAL(((mal_t*)ast.val.list->items)[i], env);
-                }
+// char* rep(char *in, env_t *env)
+// {
+//     return PRINT(EVAL(READ(in), env));
+// }
 
-                // apply the first element's procedure to the arguments
-                mal_t func = ((mal_t*)elements->items)[0];
-                if (func.type != FUNCTION)
-                {
-                    return mal_error("Error: Cannot apply non-function mal_t type");
-                }
+// int main(int argc, char *argv[])
+// {
+//     env_t repl_env = env_init();
+//     env_insert(&repl_env, "+", mal_func(add));
+//     env_insert(&repl_env, "-", mal_func(sub));
+//     env_insert(&repl_env, "*", mal_func(mul));
+//     env_insert(&repl_env, "/", mal_func(divide));
 
-                // apply func, with argument list length and list of argument mal_t elements
-                mal_t result = func.val.func(elements->len - 1, &((mal_t*) elements->items)[1]);
-                free(elements);
-                return result;
-            }
-        default:
-            return ast;
-        
-    }
-}
-
-mal_t READ(char *in)
-{
-    return read_str(in);
-}
-
-mal_t EVAL(mal_t ast, env_t *env)
-{
-    return eval_ast(ast, env);
-}
-
-char* PRINT(mal_t ast)
-{
-    return pr_str(ast);
-}
-
-char* rep(char *in, env_t *env)
-{
-    return PRINT(EVAL(READ(in), env));
-}
-
-int main(int argc, char *argv[])
-{
-    env_t repl_env = env_init();
-    env_insert(&repl_env, "+", mal_func(add));
-    env_insert(&repl_env, "-", mal_integer(42));
-    env_insert(&repl_env, "*", mal_func(mul));
-    env_insert(&repl_env, "/", mal_integer(42));
-
-    char *line;
-    for (;;) {
-        line = readline("> ");
-        if (!line) {
-            printf("\n");
-            break;
-        }
-        if (*line) {
-            add_history(line);
-            char *rep_str = rep(line, &repl_env);
-            printf("%s\n", rep_str);
-            // rep_str should be free'd, except for errors
-        }
-        free(line);
-    }
-    env_free(&repl_env);
-}
+//     char *line;
+//     for (;;) {
+//         line = readline("> ");
+//         if (!line) {
+//             printf("\n");
+//             break;
+//         }
+//         if (*line) {
+//             add_history(line);
+//             char *rep_str = rep(line, &repl_env);
+//             printf("%s\n", rep_str);
+//             // rep_str should be free'd, except for errors
+//         }
+//         free(line);
+//     }
+//     env_free(&repl_env);
+// }
