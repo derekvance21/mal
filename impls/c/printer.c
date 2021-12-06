@@ -88,6 +88,10 @@ char* pr_str(mal_t mal)
         return mal.val.errmsg;
     case KEYWORD:
         return pr_keyword(mal.val.keyword);
+    case FUNCTION:
+        return "#<function>";
+    case CLOSURE:
+        return "#<closure>";
     case DECIMAL:
     default:
     {

@@ -30,7 +30,7 @@ char* rep(char *in, env_t *env, int *err)
 {
     mal_t ast = EVAL(READ(in), env);
     // TODO: Make this way smarter
-    if (ast.type == ERROR || ast.type == KEYWORD)
+    if (ast.type == ERROR || ast.type == KEYWORD || ast.type == FUNCTION || ast.type == CLOSURE)
     {
         *err = 1;
     }
@@ -39,7 +39,7 @@ char* rep(char *in, env_t *env, int *err)
 
 int main(int argc, char *argv[])
 {
-    env_t repl_env = env_init(NULL);
+    env_t repl_env = env_init(NULL, NULL, NULL, 0);
     env_insert(&repl_env, "+", mal_func(add));
     env_insert(&repl_env, "-", mal_func(sub));
     env_insert(&repl_env, "*", mal_func(mul));

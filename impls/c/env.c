@@ -20,7 +20,8 @@ int hash(char *key)
     return hash;
 }
 
-env_t env_init(env_t *outer)
+// binds is vector_t<mal_t>, exprs is vector_t<mal_t>; they should be the same len
+env_t env_init(env_t *outer, mal_t *binds, mal_t *exprs, int argc)
 {
     env_t env;
     env.outer = outer;
@@ -29,6 +30,18 @@ env_t env_init(env_t *outer)
     {
         env.buckets[i] = NULL;
     }
+
+    // do bindings
+    if (binds && exprs)
+    {
+        for (i = 0; i < argc; ++i)
+        {
+            mal_t bind = ((mal_t*)binds->items)[i];
+            mal_t expr = ((mal_t*)exprs->items)[i];
+            env_insert(&env, mal.val.symbol, expr);
+        }
+    }
+
     return env;
 }
 

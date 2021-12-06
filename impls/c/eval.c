@@ -52,7 +52,9 @@ mal_t eval_let(mal_t ast, env_t *env)
     }
 
     // create a new env for the let expression, to be added to with the bindings
-    env_t let_env = env_init(env);
+    // could use new env_init if let* was used like (let* ((x y z) (1 2 3)) (+ x y z)),
+    // but then you won't get the left to right evaluated binding
+    env_t let_env = env_init(env, NULL, NULL, 0);
     int i;
     for (i = 0; i < bindings.val.list->len; ++i)
     {
@@ -104,7 +106,31 @@ mal_t eval_if(mal_t ast, env_t *env)
     {
         return eval_ast(((mal_t*)ast.val.list->items)[2], env);
     }
+}
 
+// ast is a list where first element is symbol 'lambda
+mal_t eval_lambda(mal_t ast, env_t *env)
+{
+    mal_t bindings, body;
+
+    if (ast.val.list->len != 3)
+    {
+        return mal_error("Syntax Error: special form 'lambda requires two parameters");
+    }
+
+    bindings = ((mal_t*)ast.val.list->items)[1];
+    if (bindings.type != LIST)
+    {
+        return mal_error("Syntax Error: special form 'lambda requires list of bindings as first parameter");
+    }
+
+    body = ((mal_t*) ast.val.list->items)[2];
+    if (body.type == ERROR)
+    {
+        return body;
+    }
+
+    return mal_closure(bindings.val.list->len, (mal_t*)bindings.val.list->items, body, env);
 }
 
 // ast is a list with at least one element which is not a special form symbol
@@ -122,7 +148,7 @@ mal_t eval_app(mal_t ast, env_t *env)
             return element;
         }
 
-        if (i == 0 && element.type != FUNCTION)
+        if (i == 0 && (element.type != FUNCTION || element.type != CLOSURE))
         {
             // with static vector_t vector_init(...) function, this free is unnecessary
             vector_free(elements);
@@ -134,8 +160,26 @@ mal_t eval_app(mal_t ast, env_t *env)
     }
 
     mal_t func = ((mal_t*)elements->items)[0];
-    // apply func, with argument list length and list of argument mal_t elements
-    mal_t result = func.val.func(elements->len - 1, &((mal_t*) elements->items)[1]);
+    mal_t result;
+    if (func.type == CLOSURE)
+    {
+        // Third parameter is type mal_t* but env_init needs vector_t*
+        // TODO: check that closure argc == ast.val.list->len - 1
+        if (ast.val.list->len - 1 != func.val.closure->argc)
+        {
+            result = mal_error("Error: parity mismatch");
+        }
+        else
+        {
+            env_t closure_env = env_init(env, func.val.closure->params, &((mal_t*)ast.val.list->items)[1], func.val.closure->argc);
+            eval_ast(func.val.closure->body, &closure_env);
+        }
+    }
+    else
+    {
+        // apply func, with argument list length and list of argument mal_t elements
+        result = func.val.func(elements->len - 1, &((mal_t*) elements->items)[1]);
+    }
     vector_free(elements);
     return result;
 }
@@ -163,6 +207,10 @@ mal_t eval_list(mal_t ast, env_t *env)
         else if (strcmp(first.val.symbol, "if") == 0)
         {
             return eval_if(ast, env);
+        }
+        else if (strcmp(first.val.symbol, "lambda") == 0)
+        {
+            return eval_lambda(ast, env);
         }
     }
 

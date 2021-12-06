@@ -16,7 +16,7 @@ typedef struct env
     struct env *outer;
 } env_t;
 
-env_t env_init(env_t *outer);
+env_t env_init(env_t *outer, mal_t *binds, mal_t *exprs, int argc);
 int env_insert(env_t *env, char *key, mal_t mal);
 mal_t env_get(env_t *env, char *key);
 void env_free(env_t *env);

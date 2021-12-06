@@ -82,3 +82,18 @@ mal_t mal_func(mal_t (*func)(int, mal_t*))
     mal.val.func = func;
     return mal;
 }
+
+mal_t mal_closure(int argc, mal_t *params, mal_t body, env_t *outer)
+{
+    mal_t mal;
+    mal.type = CLOSURE;
+
+    closure_t *closure = malloc(sizeof(closure_t));
+    closure->argc = argc;
+    closure->params = params;
+    closure->body = body;
+    closure->outer = outer;
+
+    mal.val.closure = closure;
+    return mal;
+}
