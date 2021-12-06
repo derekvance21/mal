@@ -4,6 +4,21 @@
 #include "printer.h"
 #include "types.h"
 
+char *pr_keyword(enum Keyword keyword)
+{
+    switch (keyword)
+    {
+    case FALSE:
+        return "false";
+    case TRUE:
+        return "true";
+    case NIL:
+        return "nil";
+    default:
+        return "*not a keyword*";
+    }
+}
+
 char* pr_str(mal_t mal)
 {
     switch (mal.type)
@@ -57,7 +72,7 @@ char* pr_str(mal_t mal)
             // the only one that doesn't (ATM) is ERROR, which uses string literals. This may change with dynamic error messaging
             mal_t element_mal = ((mal_t*)mal.val.list->items)[i];
             // TODO: In future, mal_error's should have dynamically allocated error messages, so this will be deleted
-            if (element_mal.type != ERROR)
+            if (element_mal.type != ERROR && element_mal.type != KEYWORD)
             {
                 free(element_str);
             }
@@ -71,7 +86,8 @@ char* pr_str(mal_t mal)
         return mal.val.string;
     case ERROR:
         return mal.val.errmsg;
-    case ATOM:
+    case KEYWORD:
+        return pr_keyword(mal.val.keyword);
     case DECIMAL:
     default:
     {

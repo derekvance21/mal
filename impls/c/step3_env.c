@@ -29,7 +29,8 @@ char* PRINT(mal_t ast)
 char* rep(char *in, env_t *env, int *err)
 {
     mal_t ast = EVAL(READ(in), env);
-    if (ast.type == ERROR)
+    // TODO: Make this way smarter
+    if (ast.type == ERROR || ast.type == KEYWORD)
     {
         *err = 1;
     }
@@ -57,8 +58,8 @@ int main(int argc, char *argv[])
             char *rep_str = rep(line, &repl_env, &err);
             printf("%s\n", rep_str);
 
-            // all non-errors have to free rep_str
             // as of now, errors print as string literals
+            // so all non-errors have to free rep_str
             if (err == 0)
             {
                 free(rep_str);

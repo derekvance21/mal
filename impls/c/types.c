@@ -1,14 +1,8 @@
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include "types.h"
 
-
-mal_t mal_atom(mal_t *atom)
-{
-    mal_t mal;
-    mal.type = ATOM;
-    mal.val.atom = atom;
-    return mal;
-}
 
 mal_t mal_list(vector_t *vec)
 {
@@ -36,8 +30,31 @@ mal_t mal_decimal(float decimal)
 mal_t mal_symbol(char *symbol)
 {
     mal_t mal;
-    mal.type = SYMBOL;
-    mal.val.symbol = symbol;
+    
+    if (strcmp(symbol, "nil") == 0)
+    {    
+        mal.type = KEYWORD;
+        mal.val.keyword = NIL;
+        free(symbol);
+    }
+    else if (strcmp(symbol, "true") == 0)
+    {
+        mal.type = KEYWORD;
+        mal.val.keyword = TRUE;
+        free(symbol);
+    }
+    else if (strcmp(symbol, "false") == 0)
+    {
+        mal.type = KEYWORD;
+        mal.val.keyword = FALSE;
+        free(symbol);
+    }
+    else
+    {
+        mal.type = SYMBOL;
+        mal.val.symbol = symbol;
+    }
+
     return mal;
 }
 

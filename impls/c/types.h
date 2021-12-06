@@ -4,23 +4,30 @@
 #include "vector.h"
 
 
-typedef enum
+enum MalType
 {
-    ATOM = 1,
-    LIST = 2,
-    INTEGER = 4,
-    DECIMAL = 8,
-    SYMBOL = 16,
-    STRING = 32,
-    ERROR = 64,
-    FUNCTION = 128,
-} MalType;
+    KEYWORD,
+    LIST,
+    INTEGER,
+    DECIMAL,
+    SYMBOL,
+    STRING,
+    ERROR,
+    FUNCTION,
+};
+
+enum Keyword
+{
+    TRUE,
+    FALSE,
+    NIL,
+};
 
 typedef struct Mal
 {
-    MalType type;
+    enum MalType type;
     union {
-        struct Mal *atom;
+        enum Keyword keyword;
         vector_t *list;
         int integer;
         float decimal;
@@ -34,7 +41,6 @@ typedef struct Mal
 // TODO: Generic mal_free(mal_t mal) function that switches on the type and free's alloc'd resources as necessary
 // ex: symbol, string need their char* to be free'd, list needs vector_t to be free'd
 
-mal_t mal_atom(mal_t *atom);
 mal_t mal_list(vector_t *vec);
 mal_t mal_integer(int integer);
 mal_t mal_decimal(float decimal);

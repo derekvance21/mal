@@ -87,6 +87,26 @@ mal_t eval_let(mal_t ast, env_t *env)
     return result;
 }
 
+// ast is a list where first element is symbol 'if
+mal_t eval_if(mal_t ast, env_t *env)
+{
+    if (ast.val.list->len != 4)
+    {
+        return mal_error("Syntax Error: special form 'if requires three parameters");
+    }
+
+    mal_t condition = eval_ast(((mal_t*)ast.val.list->items)[1], env);
+    if (condition.type == KEYWORD && (condition.val.keyword == FALSE || condition.val.keyword == NIL))
+    {
+        return eval_ast(((mal_t*)ast.val.list->items)[3], env);
+    }
+    else
+    {
+        return eval_ast(((mal_t*)ast.val.list->items)[2], env);
+    }
+
+}
+
 // ast is a list with at least one element which is not a special form symbol
 mal_t eval_app(mal_t ast, env_t *env)
 {
@@ -139,6 +159,10 @@ mal_t eval_list(mal_t ast, env_t *env)
         else if (strcmp(first.val.symbol, "let*") == 0)
         {
             return eval_let(ast, env);
+        }
+        else if (strcmp(first.val.symbol, "if") == 0)
+        {
+            return eval_if(ast, env);
         }
     }
 
