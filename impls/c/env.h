@@ -10,11 +10,11 @@ typedef struct env_element
     struct env_element *next;
 } env_element_t;
 
-typedef struct env
+struct Env
 {
     env_element_t *buckets[16];
-    struct env *outer;
-} env_t;
+    struct Env *outer;
+};
 
 env_t env_init(env_t *outer, mal_t *binds, mal_t *exprs, int argc);
 int env_insert(env_t *env, char *key, mal_t mal);

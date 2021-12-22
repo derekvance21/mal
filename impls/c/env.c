@@ -7,9 +7,9 @@
 const int BUCKETS = 16;
 
 
-int hash(char *key)
+unsigned int hash(char *key)
 {
-    int hash = 5381;
+    unsigned int hash = 5381;
     char c;
 
     while ((c = *key++))
@@ -36,9 +36,9 @@ env_t env_init(env_t *outer, mal_t *binds, mal_t *exprs, int argc)
     {
         for (i = 0; i < argc; ++i)
         {
-            mal_t bind = ((mal_t*)binds->items)[i];
-            mal_t expr = ((mal_t*)exprs->items)[i];
-            env_insert(&env, mal.val.symbol, expr);
+            mal_t bind = binds[i];
+            mal_t expr = exprs[i];
+            env_insert(&env, bind.val.symbol, expr);
         }
     }
 
@@ -47,7 +47,7 @@ env_t env_init(env_t *outer, mal_t *binds, mal_t *exprs, int argc)
 
 int env_insert(env_t *env, char *key, mal_t mal)
 {
-    int bucket = hash(key) % BUCKETS;
+    unsigned int bucket = hash(key) % BUCKETS;
 
     // first in bucket
     if (!env->buckets[bucket])
@@ -96,7 +96,7 @@ int env_insert(env_t *env, char *key, mal_t mal)
 
 mal_t env_get(env_t *env, char *key)
 {
-    int bucket = hash(key) % BUCKETS;
+    unsigned int bucket = hash(key) % BUCKETS;
 
     env_t *curr_env = env;
     while (curr_env)

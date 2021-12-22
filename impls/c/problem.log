@@ -1,0 +1,19 @@
+> (def! f (lambda (x) (+ x 1)))
+#<closure>
+> (f 4)
+5
+> (f 39)
+; free(): double free detected in tcache 2
+; Aborted (core dumped)
+
+; -- new REPL --
+
+> (def! f (lambda (x) x))
+#<closure>
+> (f 4)
+4
+> (f 5)
+; Runtime Error: cannot reference an identifier before its definition
+> (f 4)
+; malloc_consolidate(): invalid chunk size
+; Aborted (core dumped)

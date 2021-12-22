@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "eval.h"
+#include "types.h"
 
 
 // ast is a list with the first element being the symbol 'def!
@@ -125,10 +126,6 @@ mal_t eval_lambda(mal_t ast, env_t *env)
     }
 
     body = ((mal_t*) ast.val.list->items)[2];
-    if (body.type == ERROR)
-    {
-        return body;
-    }
 
     return mal_closure(bindings.val.list->len, (mal_t*)bindings.val.list->items, body, env);
 }
@@ -148,7 +145,7 @@ mal_t eval_app(mal_t ast, env_t *env)
             return element;
         }
 
-        if (i == 0 && (element.type != FUNCTION || element.type != CLOSURE))
+        if (i == 0 && element.type != FUNCTION && element.type != CLOSURE)
         {
             // with static vector_t vector_init(...) function, this free is unnecessary
             vector_free(elements);
@@ -171,8 +168,9 @@ mal_t eval_app(mal_t ast, env_t *env)
         }
         else
         {
-            env_t closure_env = env_init(env, func.val.closure->params, &((mal_t*)ast.val.list->items)[1], func.val.closure->argc);
-            eval_ast(func.val.closure->body, &closure_env);
+            env_t *closure_env = (env_t*) malloc(sizeof(env_t));
+            *closure_env = env_init(env, func.val.closure->params, &((mal_t*)ast.val.list->items)[1], func.val.closure->argc);
+            result = eval_ast(func.val.closure->body, closure_env);
         }
     }
     else
