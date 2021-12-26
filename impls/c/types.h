@@ -65,6 +65,7 @@ mal_t mal_string(char *string);
 mal_t mal_error(char *errmsg);
 mal_t mal_func(mal_t (*func)(int, mal_t*));
 mal_t mal_closure(int argc, mal_t *params, mal_t body, env_t *outer);
+mal_t mal_keyword(enum Keyword keyword);
 
 
 #endif

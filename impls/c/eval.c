@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include "eval.h"
 #include "types.h"
 
@@ -169,7 +170,10 @@ mal_t eval_app(mal_t ast, env_t *env)
         else
         {
             env_t *closure_env = (env_t*) malloc(sizeof(env_t));
-            *closure_env = env_init(env, func.val.closure->params, &((mal_t*)ast.val.list->items)[1], func.val.closure->argc);
+
+            // TODO: EITHER OF THESE COULD BE CORRECT?
+            // *closure_env = env_init(env, func.val.closure->params, &((mal_t*)ast.val.list->items)[1], func.val.closure->argc);
+            *closure_env = env_init(func.val.closure->outer, func.val.closure->params, &((mal_t*)ast.val.list->items)[1], func.val.closure->argc);
             result = eval_ast(func.val.closure->body, closure_env);
         }
     }
@@ -226,7 +230,12 @@ mal_t eval_ast(mal_t ast, env_t *env)
             mal_t mal = env_get(env, ast.val.symbol);
             // ast.val.symbol was a unique malloc'd token, so free it after indexing into env
             // TODO: Replace this with mal_free(ast)
-            free(ast.val.symbol);
+            // This is a problem. Thing about (def! f (lambda (x) x)), then running
+            // (f 1)
+            // (f 2)
+            // the body of the lambda is 'x, and after running this, it'll free the symbol, never to be seen from again
+            // so the second fails
+            // free(ast.val.symbol);
             return mal;
         }
         case LIST:

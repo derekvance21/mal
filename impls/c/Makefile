@@ -8,7 +8,7 @@ LIBS = -lreadline
 
 #####################
 
-all: clean step3_env
+all: clean step4_if_lambda
 
 step0_repl: $(OBJS)
 	gcc $(FLAGS) $(OBJS) -o step0_repl $(LIBS)
@@ -22,8 +22,11 @@ step2_eval: $(OBJS)
 step3_env: $(OBJS)
 	gcc $(FLAGS) $(OBJS) -o step3_env $(LIBS)
 
+step4_if_lambda: $(OBJS)
+	gcc -g $(FLAGS) $(OBJS) -o step4_if_lambda $(LIBS)
+
 %.o: %.c
-	gcc $(FLAGS) -c $< -o $@ $(LIBS)
+	gcc -g $(FLAGS) -c $< -o $@ $(LIBS)
 
 clean:
 	rm -f $(OBJS) $(BINS) $(OTHER_OBJS) mal

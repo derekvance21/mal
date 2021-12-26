@@ -71,8 +71,9 @@ char* pr_str(mal_t mal)
             // integer mallocs in pr_str[INTEGER], symbol and string malloc'd in tokenize, list mallocs in pr_str[LIST]
             // the only one that doesn't (ATM) is ERROR, which uses string literals. This may change with dynamic error messaging
             mal_t element_mal = ((mal_t*)mal.val.list->items)[i];
-            // TODO: In future, mal_error's should have dynamically allocated error messages, so this will be deleted
-            if (element_mal.type != ERROR && element_mal.type != KEYWORD)
+
+            // TODO: In future, mal_error's should have dynamically allocated error messages, so the ERROR part will be deleted
+            if (element_mal.type != ERROR && element_mal.type != KEYWORD && element_mal.type != FUNCTION && element_mal.type != CLOSURE)
             {
                 free(element_str);
             }

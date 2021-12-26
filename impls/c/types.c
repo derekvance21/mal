@@ -33,20 +33,17 @@ mal_t mal_symbol(char *symbol)
     
     if (strcmp(symbol, "nil") == 0)
     {    
-        mal.type = KEYWORD;
-        mal.val.keyword = NIL;
+        return mal_keyword(NIL);
         free(symbol);
     }
     else if (strcmp(symbol, "true") == 0)
     {
-        mal.type = KEYWORD;
-        mal.val.keyword = TRUE;
+        return mal_keyword(TRUE);
         free(symbol);
     }
     else if (strcmp(symbol, "false") == 0)
     {
-        mal.type = KEYWORD;
-        mal.val.keyword = FALSE;
+        return mal_keyword(FALSE);
         free(symbol);
     }
     else
@@ -95,5 +92,13 @@ mal_t mal_closure(int argc, mal_t *params, mal_t body, env_t *outer)
     closure->outer = outer;
 
     mal.val.closure = closure;
+    return mal;
+}
+
+mal_t mal_keyword(enum Keyword keyword)
+{
+    mal_t mal;
+    mal.type = KEYWORD;
+    mal.val.keyword = keyword;
     return mal;
 }
