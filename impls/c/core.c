@@ -1,5 +1,8 @@
 #include "types.h"
+#include "printer.h"
 #include "core.h"
+#include <stdio.h>
+// #include "printer.h"
 
 mal_t add(int argc, mal_t *argv)
 {
@@ -124,6 +127,131 @@ mal_t eq(int argc, mal_t *argv)
     return mal_keyword(TRUE);
 }
 
+mal_t lt(int argc, mal_t *argv)
+{
+    if (argc == 0)
+    {
+        return mal_error("Error: parity mismatch: proc < requires at least 1 argument");
+    }
+    mal_t comp = argv[0];
+    if (comp.type != INTEGER)
+    {
+        return mal_error("Error: cannot compare a non-integer with <");
+    }
+
+    int i;
+    for (i = 1; i < argc; ++i)
+    {
+        mal_t term = argv[i];
+        if (term.type != INTEGER)
+        {
+            return mal_error("Error: cannot compare a non-integer with <");
+        }
+
+        if (comp.val.integer >= term.val.integer)
+        {
+            return mal_keyword(FALSE);
+        }
+        comp = term;
+    }
+
+    return mal_keyword(TRUE);
+}
+
+mal_t lte(int argc, mal_t *argv)
+{
+    if (argc == 0)
+    {
+        return mal_error("Error: parity mismatch: proc <= requires at least 1 argument");
+    }
+    mal_t comp = argv[0];
+    if (comp.type != INTEGER)
+    {
+        return mal_error("Error: cannot compare a non-integer with <=");
+    }
+
+    int i;
+    for (i = 1; i < argc; ++i)
+    {
+        mal_t term = argv[i];
+        if (term.type != INTEGER)
+        {
+            return mal_error("Error: cannot compare a non-integer with <=");
+        }
+
+        if (comp.val.integer > term.val.integer)
+        {
+            return mal_keyword(FALSE);
+        }
+        comp = term;
+    }
+
+    return mal_keyword(TRUE);
+}
+
+mal_t gt(int argc, mal_t *argv)
+{
+    if (argc == 0)
+    {
+        return mal_error("Error: parity mismatch: proc > requires at least 1 argument");
+    }
+    mal_t comp = argv[0];
+    if (comp.type != INTEGER)
+    {
+        return mal_error("Error: cannot compare a non-integer with >");
+    }
+
+    int i;
+    for (i = 1; i < argc; ++i)
+    {
+        mal_t term = argv[i];
+        if (term.type != INTEGER)
+        {
+            return mal_error("Error: cannot compare a non-integer with >");
+        }
+
+        if (comp.val.integer <= term.val.integer)
+        {
+            return mal_keyword(FALSE);
+        }
+        comp = term;
+    }
+
+    return mal_keyword(TRUE);
+}
+
+mal_t gte(int argc, mal_t *argv)
+{
+        if (argc == 0)
+    {
+        return mal_error("Error: parity mismatch: proc >= requires at least 1 argument");
+    }
+    mal_t comp = argv[0];
+    if (comp.type != INTEGER)
+    {
+        return mal_error("Error: cannot compare a non-integer with >=");
+    }
+
+    int i;
+    for (i = 1; i < argc; ++i)
+    {
+        mal_t term = argv[i];
+        if (term.type != INTEGER)
+        {
+            return mal_error("Error: cannot compare a non-integer with >=");
+        }
+
+        if (comp.val.integer < term.val.integer)
+        {
+            return mal_keyword(FALSE);
+        }
+        comp = term;
+    }
+
+    return mal_keyword(TRUE);
+}
+
+
 
 // evaluate the arguments and make them the elements of a mal list
 mal_t list(int argc, mal_t *argv)
@@ -194,4 +322,19 @@ mal_t length(int argc, mal_t *argv)
     }
 
     return mal_integer(arg.val.list->len);
+}
+
+mal_t print(int argc, mal_t *argv)
+{
+    if (argc != 1)
+    {
+        return mal_error("Error: print expects one argument");
+    }
+
+    mal_t arg = argv[0];
+    char *str = pr_str(arg);
+    // printf("\033[0;32m"); // sets output color to green
+    printf("%s\n", str);
+    // printf("\033[0m"); // resets output color
+    return mal_keyword(NIL);
 }

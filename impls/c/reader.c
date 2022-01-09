@@ -138,10 +138,12 @@ mal_t read_atom(reader_t *reader)
         {
             return mal_symbol(token);
         }
-        // it's an integer, so free the token char*, because now we'll just use int val
         else 
         {
-            free(token);
+            // it's an integer, so free the token char*, because now we'll just use int val
+            // if we free here, then running mal code before accepting user input will fail,
+            // because that will be a string literal
+            // free(token);
             return mal_integer(val);
         }
 

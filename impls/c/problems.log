@@ -1,0 +1,18 @@
+(def! f (lambda (x) (if (= x 0) "done" (f (- x 1)))))
+; #<closure>
+
+(f 100)
+; "done"
+
+(def! f (lambda (x) (if (= x 0) x (f (- x 1)))))
+; #<closure>
+
+(f 1)
+; (- x 1)
+
+f
+; #<closure>
+
+(f 1)
+; Runtime Error: cannot reference an identifier before its definition
+

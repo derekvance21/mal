@@ -126,6 +126,16 @@ mal_t eval_lambda(mal_t ast, env_t *env)
         return mal_error("Syntax Error: special form 'lambda requires list of bindings as first parameter");
     }
 
+    int i;
+    for (i = 0; i < bindings.val.list->len; ++i)
+    {
+        mal_t binding = ((mal_t*)bindings.val.list->items)[i];
+        if (binding.type != SYMBOL)
+        {
+            return mal_error("Syntax Error: special form 'lambda requires all bindings to be symbols");
+        }
+    }
+
     body = ((mal_t*) ast.val.list->items)[2];
 
     return mal_closure(bindings.val.list->len, (mal_t*)bindings.val.list->items, body, env);
@@ -173,7 +183,7 @@ mal_t eval_app(mal_t ast, env_t *env)
 
             // TODO: EITHER OF THESE COULD BE CORRECT?
             // *closure_env = env_init(env, func.val.closure->params, &((mal_t*)ast.val.list->items)[1], func.val.closure->argc);
-            *closure_env = env_init(func.val.closure->outer, func.val.closure->params, &((mal_t*)ast.val.list->items)[1], func.val.closure->argc);
+            *closure_env = env_init(func.val.closure->outer, func.val.closure->params, &((mal_t*)elements->items)[1], func.val.closure->argc);
             result = eval_ast(func.val.closure->body, closure_env);
         }
     }

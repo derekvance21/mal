@@ -1,0 +1,4 @@
+(def! fib-iter (lambda (x y c) 
+   (if (= c 0) 
+      x 
+      (fib-iter y (+ x y) (- c 1)))))
